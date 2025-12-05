@@ -1,0 +1,165 @@
+//
+//  NotchWindow.swift
+//  BetterNotch
+//
+//  Created by Justin Li on 2025/12/4.
+//
+
+import SwiftUI
+import AppKit
+
+class NotchWindow: NSWindow {
+    private var notchViewModel = NotchViewModel()
+    private var trackingArea: NSTrackingArea?
+    
+    init() {
+        // Start with collapsed notch frame
+        let notchFrame = NotchWindow.calculateNotchFrame()
+        
+        super.init(
+            contentRect: notchFrame,
+            styleMask: [.borderless, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        
+        // Window configuration
+        self.isOpaque = false
+        self.backgroundColor = .clear
+        self.level = .statusBar
+        self.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        self.isMovable = false
+        self.hasShadow = false // No shadow in collapsed state
+        
+        // Set view model to collapsed state
+        notchViewModel.isExpanded = false
+        
+        // Set up the SwiftUI content
+        let contentView = NotchContentView()
+            .environmentObject(notchViewModel)
+        
+        self.contentView = NSHostingView(rootView: contentView)
+        
+        // Setup mouse tracking
+        setupTrackingArea()
+    }
+    
+    static func calculateNotchFrame() -> NSRect {
+        guard let screen = NSScreen.main else {
+            return NSRect(x: 0, y: 0, width: 220, height: 32)
+        }
+        
+        let screenFrame = screen.frame
+        let notchWidth: CGFloat = 220
+        let notchHeight: CGFloat = 32
+        let menuBarHeight: CGFloat = 25 // Standard macOS menu bar height
+        
+        // Center horizontally, position just below the menu bar
+        let x = screenFrame.origin.x + (screenFrame.width - notchWidth) / 2
+        let y = screenFrame.origin.y + screenFrame.height - notchHeight - menuBarHeight
+        
+        return NSRect(x: x, y: y, width: notchWidth, height: notchHeight)
+    }
+    
+    static func calculateExpandedFrame() -> NSRect {
+        guard let screen = NSScreen.main else {
+            return NSRect(x: 0, y: 0, width: 600, height: 400)
+        }
+        
+        let expandedWidth: CGFloat = 600
+        let expandedHeight: CGFloat = 400
+        let menuBarHeight: CGFloat = 25
+        
+        let x = screen.frame.origin.x + (screen.frame.width - expandedWidth) / 2
+        let y = screen.frame.origin.y + screen.frame.height - expandedHeight - menuBarHeight
+        
+        return NSRect(x: x, y: y, width: expandedWidth, height: expandedHeight)
+    }
+    
+    func setupTrackingArea() {
+        if let trackingArea = trackingArea {
+            contentView?.removeTrackingArea(trackingArea)
+        }
+        
+        let options: NSTrackingArea.Options = [
+            .mouseEnteredAndExited,
+            .mouseMoved,
+            .activeAlways,
+            .inVisibleRect
+        ]
+        
+        trackingArea = NSTrackingArea(
+            rect: .zero,
+            options: options,
+            owner: self,
+            userInfo: nil
+        )
+        
+        if let trackingArea = trackingArea {
+            contentView?.addTrackingArea(trackingArea)
+        }
+    }
+    
+    override func mouseEntered(with event: NSEvent) {
+        super.mouseEntered(with: event)
+        notchViewModel.isHovering = true
+        expandNotch()
+    }
+    
+    override func mouseExited(with event: NSEvent) {
+        super.mouseExited(with: event)
+        notchViewModel.isHovering = false
+        
+        // Delay collapse to allow for interaction
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self else { return }
+            if !self.notchViewModel.isHovering && !self.notchViewModel.isPinned {
+                self.collapseNotch()
+            }
+        }
+    }
+    
+    func expandNotch() {
+        let newFrame = NotchWindow.calculateExpandedFrame()
+        
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.3
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().setFrame(newFrame, display: true)
+        }
+        
+        self.hasShadow = true
+        notchViewModel.isExpanded = true
+    }
+    
+    func collapseNotch() {
+        let notchFrame = NotchWindow.calculateNotchFrame()
+        
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.3
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            self.animator().setFrame(notchFrame, display: true)
+        }
+        
+        self.hasShadow = false
+        notchViewModel.isExpanded = false
+    }
+    
+    func toggleExpanded() {
+        if notchViewModel.isExpanded {
+            notchViewModel.isPinned = false
+            collapseNotch()
+        } else {
+            expandNotch()
+            notchViewModel.isPinned = true
+        }
+    }
+    
+    override var canBecomeKey: Bool {
+        return true
+    }
+    
+    override var canBecomeMain: Bool {
+        return true
+    }
+}

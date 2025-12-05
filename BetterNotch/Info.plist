@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSCalendarsUsageDescription</key>
+    <string>BetterNotch needs access to your calendar to display upcoming events in the notch.</string>
+    <key>NSRemindersUsageDescription</key>
+    <string>BetterNotch needs access to your reminders to show them in the notch.</string>
+    <key>NSAppleMusicUsageDescription</key>
+    <string>BetterNotch needs access to Apple Music to display media controls in the notch.</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSSupportsAutomaticTermination</key>
+    <false/>
+    <key>NSSupportsSuddenTermination</key>
+    <false/>
+</dict>
+</plist>

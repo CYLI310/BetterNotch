@@ -46,32 +46,30 @@ class NotchWindow: NSWindow {
     
     static func calculateNotchFrame() -> NSRect {
         guard let screen = NSScreen.main else {
-            return NSRect(x: 0, y: 0, width: 220, height: 32)
+            return NSRect(x: 0, y: 0, width: 350, height: 32)
         }
         
         let screenFrame = screen.frame
-        let notchWidth: CGFloat = 220
+        let notchWidth: CGFloat = 350
         let notchHeight: CGFloat = 32
-        let menuBarHeight: CGFloat = 25 // Standard macOS menu bar height
         
-        // Center horizontally, position just below the menu bar
+        // Center horizontally, position at the very top of the screen
         let x = screenFrame.origin.x + (screenFrame.width - notchWidth) / 2
-        let y = screenFrame.origin.y + screenFrame.height - notchHeight - menuBarHeight
+        let y = screenFrame.origin.y + screenFrame.height - notchHeight
         
         return NSRect(x: x, y: y, width: notchWidth, height: notchHeight)
     }
     
     static func calculateExpandedFrame() -> NSRect {
         guard let screen = NSScreen.main else {
-            return NSRect(x: 0, y: 0, width: 600, height: 400)
+            return NSRect(x: 0, y: 0, width: 600, height: 450)
         }
         
         let expandedWidth: CGFloat = 600
-        let expandedHeight: CGFloat = 400
-        let menuBarHeight: CGFloat = 25
+        let expandedHeight: CGFloat = 450
         
         let x = screen.frame.origin.x + (screen.frame.width - expandedWidth) / 2
-        let y = screen.frame.origin.y + screen.frame.height - expandedHeight - menuBarHeight
+        let y = screen.frame.origin.y + screen.frame.height - expandedHeight
         
         return NSRect(x: x, y: y, width: expandedWidth, height: expandedHeight)
     }
@@ -103,6 +101,7 @@ class NotchWindow: NSWindow {
     override func mouseEntered(with event: NSEvent) {
         super.mouseEntered(with: event)
         notchViewModel.isHovering = true
+        notchViewModel.resetHideTimer()
         expandNotch()
     }
     

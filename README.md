@@ -1,4 +1,4 @@
-# BetterNotch - Simplified Edition
+# BetterNotch
 
 A minimal, elegant macOS menu bar enhancement that sits at the top of your screen, providing quick access to essential system information and your favorite apps.
 
@@ -141,8 +141,8 @@ BetterNotch/
 │   ├── NotchWindow.swift         # Window management
 │   ├── NotchViewModel.swift      # State management
 │   ├── NotchContentView.swift    # UI components
+│   ├── AppsView.swift            # Apps grid and launcher
 │   └── Assets.xcassets/          # App assets
-├── SIMPLIFICATION_SUMMARY.md     # Change log
 └── README.md                     # This file
 ```
 
@@ -171,6 +171,11 @@ BetterNotch/
    - Show system information
    - Handle user interactions
 
+4. **AppsView** - SwiftUI view that:
+    - Displays a grid of installed applications
+    - Provides a search bar to filter apps
+    - Launches applications on click
+
 ## 🐛 Known Limitations
 
 1. **System Metrics** - CPU and Memory usage currently show placeholder values. Real implementation requires:
@@ -181,17 +186,6 @@ BetterNotch/
    - `NWPathMonitor` from Network framework
 
 3. **No Menu Bar Icon** - The app has no menu bar presence. Consider adding one if you need easy access to preferences or quit options.
-
-## 🎁 What Was Removed
-
-This simplified version removed:
-- ❌ Media player controls
-- ❌ Notifications view
-- ❌ Calendar integration
-- ❌ Apps launcher
-- ❌ Tray functionality
-- ❌ Tab navigation
-- ❌ Menu bar status item
 
 ## 🔮 Future Enhancements
 

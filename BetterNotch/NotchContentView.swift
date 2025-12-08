@@ -89,62 +89,6 @@ struct ExpandedNotchView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Top bar with time and battery (always visible)
-            HStack(spacing: 16) {
-                // Time
-                HStack(spacing: 6) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
-                    Text(viewModel.currentTime, style: .time)
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.9))
-                }
-                
-                Spacer()
-                
-                // Tab buttons
-                HStack(spacing: 8) {
-                    TabButton(
-                        icon: "info.circle.fill",
-                        isSelected: selectedTab == .info,
-                        action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                selectedTab = .info
-                            }
-                        }
-                    )
-                    
-                    TabButton(
-                        icon: "square.grid.2x2.fill",
-                        isSelected: selectedTab == .apps,
-                        action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                selectedTab = .apps
-                            }
-                        }
-                    )
-                }
-                
-                Spacer()
-                
-                // Battery
-                HStack(spacing: 6) {
-                    Image(systemName: viewModel.isCharging ? "bolt.fill" : "battery.100")
-                        .font(.system(size: 12))
-                        .foregroundColor(viewModel.isCharging ? .green : .white.opacity(0.6))
-                    Text("\(Int(viewModel.batteryLevel * 100))%")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.9))
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            .background(Color.white.opacity(0.05))
-            
-            Divider()
-                .background(Color.white.opacity(0.1))
-            
             // Content area with smooth transition
             ZStack {
                 if selectedTab == .info {
@@ -162,17 +106,42 @@ struct ExpandedNotchView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // Bottom tab indicator
+            HStack(spacing: 12) {
+                TabButton(
+                    icon: "info.circle.fill",
+                    isSelected: selectedTab == .info,
+                    action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            selectedTab = .info
+                        }
+                    }
+                )
+                
+                TabButton(
+                    icon: "square.grid.2x2.fill",
+                    isSelected: selectedTab == .apps,
+                    action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            selectedTab = .apps
+                        }
+                    }
+                )
+            }
+            .padding(.vertical, 12)
+            .padding(.bottom, 4)
         }
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 32)
                 .fill(Color(red: 0.12, green: 0.12, blue: 0.12))
                 .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 15)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 32)
                 .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .clipShape(RoundedRectangle(cornerRadius: 32))
         .onAppear {
             updateSystemInfo()
             Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
@@ -278,16 +247,41 @@ struct InfoTabView: View {
                     color: .cyan
                 )
             }
-            .padding(24)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
             
-            Spacer()
+            Spacer(minLength: 0)
         }
     }
 }
 
 struct AppsTabView: View {
+    @State private var hasError = false
+    
     var body: some View {
-        AppsView()
+        if hasError {
+            // Fallback UI if AppsView crashes
+            VStack(spacing: 16) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 48))
+                    .foregroundColor(.orange)
+                
+                Text("Unable to load apps")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+                
+                Text("Please try again later")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            AppsView()
+                .onAppear {
+                    // Give AppsView a moment to load
+                }
+        }
     }
 }
 

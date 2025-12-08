@@ -126,11 +126,16 @@ class MenuBarAppsManager: ObservableObject {
     @Published var apps: [MenuBarApp] = []
     
     init() {
+        // Start with sample apps immediately to prevent empty state
+        loadSampleApps()
+        // Then try to load real apps
         loadApps()
     }
     
     func loadApps() {
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
             // Get common menu bar apps and utilities
             let workspace = NSWorkspace.shared
             
@@ -144,7 +149,8 @@ class MenuBarAppsManager: ObservableObject {
             var discoveredApps: [MenuBarApp] = []
             
             for path in appPaths {
-                if let contents = try? FileManager.default.contentsOfDirectory(atPath: path) {
+                do {
+                    let contents = try FileManager.default.contentsOfDirectory(atPath: path)
                     for item in contents where item.hasSuffix(".app") {
                         let fullPath = "\(path)/\(item)"
                         if let bundle = Bundle(path: fullPath),
@@ -161,6 +167,8 @@ class MenuBarAppsManager: ObservableObject {
                             ))
                         }
                     }
+                } catch {
+                    print("Error loading apps from \(path): \(error)")
                 }
             }
             
@@ -168,12 +176,10 @@ class MenuBarAppsManager: ObservableObject {
             let sortedApps = discoveredApps.sorted { $0.name < $1.name }
             
             DispatchQueue.main.async {
-                self.apps = sortedApps
-                
-                // If no apps found, add some common ones manually
-                if self.apps.isEmpty {
-                    self.loadSampleApps()
+                if !sortedApps.isEmpty {
+                    self.apps = sortedApps
                 }
+                // Keep sample apps if no real apps found
             }
         }
     }

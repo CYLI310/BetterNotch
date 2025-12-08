@@ -11,6 +11,7 @@ import AppKit
 class NotchWindow: NSWindow {
     private var notchViewModel = NotchViewModel()
     private var trackingArea: NSTrackingArea?
+    private var isAnimating = false
     
     init() {
         // Start with collapsed notch frame
@@ -27,9 +28,12 @@ class NotchWindow: NSWindow {
         self.isOpaque = false
         self.backgroundColor = .clear
         self.level = .statusBar
-        self.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
+        self.collectionBehavior = [.canJoinAllSpaces, .stationary]
         self.isMovable = false
         self.hasShadow = false // No shadow in collapsed state
+        
+        // Allow mouse events
+        self.ignoresMouseEvents = false
         
         // Set view model to collapsed state
         notchViewModel.isExpanded = false
@@ -38,7 +42,12 @@ class NotchWindow: NSWindow {
         let contentView = NotchContentView()
             .environmentObject(notchViewModel)
         
-        self.contentView = NSHostingView(rootView: contentView)
+        let hostingView = NSHostingView(rootView: contentView)
+        hostingView.wantsLayer = true
+        hostingView.layer?.masksToBounds = false // Allow shadows to show
+        hostingView.layer?.cornerRadius = 0 // Let SwiftUI handle corners
+        
+        self.contentView = hostingView
         
         // Setup mouse tracking
         setupTrackingArea()
@@ -62,11 +71,11 @@ class NotchWindow: NSWindow {
     
     static func calculateExpandedFrame() -> NSRect {
         guard let screen = NSScreen.main else {
-            return NSRect(x: 0, y: 0, width: 600, height: 450)
+            return NSRect(x: 0, y: 0, width: 600, height: 480)
         }
         
         let expandedWidth: CGFloat = 600
-        let expandedHeight: CGFloat = 450
+        let expandedHeight: CGFloat = 480
         
         let x = screen.frame.origin.x + (screen.frame.width - expandedWidth) / 2
         let y = screen.frame.origin.y + screen.frame.height - expandedHeight
@@ -119,26 +128,36 @@ class NotchWindow: NSWindow {
     }
     
     func expandNotch() {
+        guard !isAnimating else { return }
+        isAnimating = true
+        
         let newFrame = NotchWindow.calculateExpandedFrame()
         
-        NSAnimationContext.runAnimationGroup { context in
+        NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().setFrame(newFrame, display: true)
-        }
+        }, completionHandler: {
+            self.isAnimating = false
+        })
         
         self.hasShadow = true
         notchViewModel.isExpanded = true
     }
     
     func collapseNotch() {
+        guard !isAnimating else { return }
+        isAnimating = true
+        
         let notchFrame = NotchWindow.calculateNotchFrame()
         
-        NSAnimationContext.runAnimationGroup { context in
+        NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             self.animator().setFrame(notchFrame, display: true)
-        }
+        }, completionHandler: {
+            self.isAnimating = false
+        })
         
         self.hasShadow = false
         notchViewModel.isExpanded = false

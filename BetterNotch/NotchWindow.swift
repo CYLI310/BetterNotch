@@ -71,11 +71,11 @@ class NotchWindow: NSWindow {
     
     static func calculateExpandedFrame() -> NSRect {
         guard let screen = NSScreen.main else {
-            return NSRect(x: 0, y: 0, width: 600, height: 480)
+            return NSRect(x: 0, y: 0, width: 450, height: 450)
         }
         
-        let expandedWidth: CGFloat = 600
-        let expandedHeight: CGFloat = 480
+        let expandedWidth: CGFloat = 450
+        let expandedHeight: CGFloat = 450
         
         let x = screen.frame.origin.x + (screen.frame.width - expandedWidth) / 2
         let y = screen.frame.origin.y + screen.frame.height - expandedHeight
@@ -131,6 +131,11 @@ class NotchWindow: NSWindow {
         guard !isAnimating else { return }
         isAnimating = true
         
+        // Ensure we remove the tracking area during animation to avoid glitches
+        if let trackingArea = trackingArea {
+             contentView?.removeTrackingArea(trackingArea)
+        }
+
         let newFrame = NotchWindow.calculateExpandedFrame()
         
         NSAnimationContext.runAnimationGroup({ context in
@@ -139,6 +144,8 @@ class NotchWindow: NSWindow {
             self.animator().setFrame(newFrame, display: true)
         }, completionHandler: {
             self.isAnimating = false
+            // Re-add tracking area
+             self.setupTrackingArea()
         })
         
         self.hasShadow = true
